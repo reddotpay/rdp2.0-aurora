@@ -124,6 +124,9 @@ const aurora = {
 		const sql = `select ${selectSql} from ?? where ${whereSql} ${additionalSql}`;
 		return aurora.query(sql, args);
 	},
+	saveAll: async () => {
+		await db.saveAll();
+	},
 	finishSession: async () => {
 		await db.finishSession();
 	},
