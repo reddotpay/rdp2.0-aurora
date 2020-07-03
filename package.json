@@ -1,0 +1,37 @@
+{
+	"name": "@reddotpay/rdp2.0-aurora",
+	"version": "1.0.0",
+	"description": "Aurora connector for RDP2.0 products",
+	"main": "index.js",
+	"scripts": {
+		"test": "nyc mocha --timeout 60000 --recursive"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/reddotpay/rdp2.0-aurora.git"
+	},
+	"author": "Billy Tso",
+	"license": "GPL-3.0",
+	"bugs": {
+		"url": "https://github.com/reddotpay/rdp2.0-aurora/issues"
+	},
+	"homepage": "https://github.com/reddotpay/rdp2.0-aurora#readme",
+	"keywords": [
+		"npm",
+		"package",
+		"reddotpay",
+		"rdp-aurora",
+		"rdp2.0-aurora"
+	],
+	"devDependencies": {
+		"nyc": "^14.1.1",
+		"mocha": "^6.2.0",
+		"chai": "^4.2.0",
+		"chai-as-promised": "^7.1.1",
+		"sinon": "^7.3.2",
+		"lodash": "^4.17.15",
+		"moment": "^2.27.0",
+		"mysql": "^2.18.1",
+		"aws-sdk": "^2.503.0"
+	}
+}
