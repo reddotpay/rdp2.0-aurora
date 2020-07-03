@@ -108,11 +108,11 @@ class DBModelBase {
 	}
 
 	static MakeInstance(db = null, values = {}) {
-		const merchant = new this(this.GetDBName(), this.GetTableName(), this.GetPrimaryKeys(), values);
+		const model = new this(this.GetDBName(), this.GetTableName(), this.GetPrimaryKeys(), values);
 		if (db) {
-			merchant.registerDb(db);
+			model.registerDb(db);
 		}
-		return merchant;
+		return model;
 	}
 
 	// /////////////////////////////////
@@ -147,8 +147,8 @@ class DBModelBase {
 		const res = await queryBuilder.exec();
 		const dbObjList = [];
 		res.forEach((val) => {
-			const merchant = this.MakeInstance(queryBuilder.dbHandler, val);
-			dbObjList.push(merchant);
+			const model = this.MakeInstance(queryBuilder.dbHandler, val);
+			dbObjList.push(model);
 		});
 		return dbObjList;
 	}

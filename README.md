@@ -63,7 +63,7 @@ auroraConfig
 
 // fetch tableOne row given a tableOneId, and get the last update
 // if tableOne is not found, return null.
-const fetchMerchantLastUpdate = async (testTableId) => {
+const fetchTableOneLastUpdate = async (testTableId) => {
 	try {
 		const sql = "select * from ?? where ?? = ?"; // use ?? for column or table names, use ? for values
 		const ret = await aurora.query(sql, ['tableOne', 'tableOneId', testTableId]);
