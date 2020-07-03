@@ -18,13 +18,11 @@ const auroraConfig = {
 		return auroraConfig;
 	},
 
-	setLogger: (info, error, debug = null) => {
-		settings.log.info = info;
-		settings.log.error = error;
-		settings.log.debug = debug;
-
+	setLogger: (logger) => {
+		settings.log = logger;
 		return auroraConfig;
 	},
+
 };
 
 module.exports = {
