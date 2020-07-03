@@ -64,6 +64,66 @@ const aurora = {
 
 		return aurora.query(sql, args);
 	},
+
+	/**
+	 * @param {string} tableName - name of table
+	 * @param {array} colToGet - array of columns to fetch
+	 * @param {Object} colWhere - Key-value pair of where conditions { ColName: ColValue } (Only supports AND condition)
+	 * @param {Object} colWhere.equal - Key-value pair of where ('key' = 'value') conditions { ColName: ColValue } (Only supports AND condition)
+	 * @param {Object} colWhere.like - Key-value pair of where ('key' like 'value') conditions { ColName: ColValue } (Only supports AND condition)
+	 * @param {Object} [additionalParams] - Additional Parameters for select statement
+	 * @param {Object<string, 'asc'|'desc'>} [additionalParams.order] - order to sort the result { ColName: 'asc' | 'desc' }
+	 * @param {Array<number, number>} [additionalParams.limit] - Array for limit condition, Limit x | Limit x, y (Maximum 2 array values)
+	 *
+	 */
+	select: async (tableName, colToGet, colWhere, additionalParams) => {
+		const args = [];
+		let selectSql = '*';
+		if (colToGet) {
+			selectSql = colToGet.map(() => '??').join(', ');
+			colToGet.forEach((val) => {
+				args.push(val);
+			});
+		}
+		args.push(tableName);
+		let whereSql = '';
+		const whereArray = [];
+		if (colWhere) {
+			if (colWhere.equal) {
+				whereArray.push(Object.keys(colWhere.equal).map(() => '?? = ?'));
+				Object.keys(colWhere.equal).forEach((key) => {
+					args.push(key);
+					args.push(colWhere.equal[key]);
+				});
+			}
+			if (colWhere.like) {
+				whereArray.push(Object.keys(colWhere.like).map(() => '?? like ?'));
+				Object.keys(colWhere.like).forEach((key) =>	 {
+					args.push(key);
+					args.push(colWhere.like[key]);
+				});
+			}
+			whereSql = whereArray.join(' and ');
+		}
+		let additionalSql = '';
+		if (additionalParams) {
+			if (additionalParams.order) {
+				additionalSql += ' order by';
+				Object.keys(additionalParams.order).forEach((key) => {
+					additionalSql += ` ?? ${additionalParams.order[key]},`;
+					args.push(key);
+				});
+				const trimLastComma = -1;
+				additionalSql = additionalSql.slice(0, trimLastComma);
+			}
+			if (additionalParams.limit) {
+				additionalSql += ' limit ';
+				additionalSql += additionalParams.limit.join(', ');
+			}
+		}
+		const sql = `select ${selectSql} from ?? where ${whereSql} ${additionalSql}`;
+		return aurora.query(sql, args);
+	},
 	finishSession: async () => {
 		await db.finishSession();
 	},
