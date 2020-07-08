@@ -163,6 +163,10 @@ QueryBuilder.prototype.conditionEndsWithStr = function (column, values) {
 	return this.conditionLike(column, `%${values}`);
 };
 
+QueryBuilder.prototype.conditionContainsStr = function (column, values) {
+	return this.conditionLike(column, `%${values}%`);
+};
+
 QueryBuilder.prototype.conditionStrCmp = function (column, value, comparator = '=') {
 	return this.customExpr(`STRCMP(??, ?) ${comparator} 0`, [column, value]);
 };
