@@ -3,9 +3,8 @@
 const db = require('./db');
 
 const aurora = {
-	getHandler: async () => db.getDb(),
 	query: async (sql, args) => {
-		const dbHandler = await aurora.getHandler();
+		const dbHandler = await db.getDb();
 		return dbHandler.query(sql, args);
 	},
 	begin: async () => {

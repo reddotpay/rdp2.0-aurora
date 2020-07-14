@@ -1,6 +1,6 @@
 {
 	"name": "@reddotpay/rdp2.0-aurora",
-	"version": "1.0.4",
+	"version": "1.0.5",
 	"description": "Aurora connector for RDP2.0 products",
 	"main": "index.js",
 	"scripts": {
@@ -28,10 +28,12 @@
 		"mocha": "^6.2.0",
 		"chai": "^4.2.0",
 		"chai-as-promised": "^7.1.1",
+		"dotenv": "^8.2.0",
 		"sinon": "^7.3.2",
 		"lodash": "^4.17.15",
 		"moment": "^2.27.0",
 		"mysql": "^2.18.1",
 		"aws-sdk": "^2.503.0"
-	}
+	},
+	"dependencies": {}
 }

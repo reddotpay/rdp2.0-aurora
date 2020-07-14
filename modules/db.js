@@ -30,11 +30,11 @@ class DatabasePool {
 		}
 		if (!this.dbList[hash]) {
 			const dbHandler = new DBHandler(info, this);
+			this.dbList[hash] = dbHandler;
 			await dbHandler.init();
 			if (this.isInTransaction) {
 				await dbHandler.begin();
 			}
-			this.dbList[hash] = dbHandler;
 		}
 		return this.dbList[hash];
 	}

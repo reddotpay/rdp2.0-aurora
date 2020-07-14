@@ -13,52 +13,81 @@ class Database {
 		this.config = config;
 		this.dbObjs = [];
 		this.isActiveConnection = false;
+		this.initQueue = [];
+		this.initing = false;
 	}
 
 	async init() {
-		const settings = {};
-		if (this.config.secretArn && typeof this.config.secretArn !== 'undefined') {
-			const ret = await secretsManager.getSecretValue({
-				SecretId: this.config.secretArn,
-			}).promise();
-			const secretString = JSON.parse(ret.SecretString);
-			const {
-				username, password, host, port,
-			} = secretString;
-			settings.user = username;
-			settings.password = password;
-			settings.host = host;
-			settings.port = port;
-		} else {
-			settings.user = this.config.username;
-			settings.password = this.config.password;
-			settings.host = this.config.host;
-			settings.port = this.config.port;
+		// only allow 1 initialization.
+		if (!this.initing) {
+			this.initing = true;
+			this.requestInit();
 		}
 
-		// if default db is specified,
-		if (this.config.database) {
-			settings.database = this.config.database;
-		}
+		// register into the promise chain.
+		await new Promise((resolve, reject) => {
+			if (this.isActiveConnection) {
+				resolve();
+			}
+			this.initQueue.push({
+				resolve, reject
+			});
+		});
+	}
 
-		this.isActiveConnection = false;
-		const totalTries = 5;
-		let tryNum = 1;
-		while (!this.isActiveConnection) {
-			try {
-				this.connection = mysql.createConnection(settings);
-				// eslint-disable-next-line no-await-in-loop
-				await this.connect();
-				this.isActiveConnection = true;
-			} catch (err) {
-				logger.error(`db connect error ${tryNum}`, err);
-				tryNum += 1;
+	async requestInit() {
+		try {
+			const settings = {};
+			if (this.config.secretArn && typeof this.config.secretArn !== 'undefined') {
+				const ret = await secretsManager.getSecretValue({
+					SecretId: this.config.secretArn,
+				}).promise();
+				const secretString = JSON.parse(ret.SecretString);
+				const {
+					username, password, host, port,
+				} = secretString;
+				settings.user = username;
+				settings.password = password;
+				settings.host = host;
+				settings.port = port;
+			} else {
+				settings.user = this.config.username;
+				settings.password = this.config.password;
+				settings.host = this.config.host;
+				settings.port = this.config.port;
+			}
 
-				// after max attempts, just throw the errors
-				if (tryNum > totalTries) {
-					throw err;
+			// if default db is specified,
+			if (this.config.database) {
+				settings.database = this.config.database;
+			}
+
+			this.isActiveConnection = false;
+			const totalTries = 5;
+			let tryNum = 1;
+			while (!this.isActiveConnection) {
+				try {
+					this.connection = mysql.createConnection(settings);
+					// eslint-disable-next-line no-await-in-loop
+					await this.connect();
+					this.isActiveConnection = true;
+				} catch (err) {
+					logger.error(`db connect error ${tryNum}`, err);
+					tryNum += 1;
+
+					// after max attempts, just throw the errors
+					if (tryNum > totalTries) {
+						throw err;
+					}
 				}
 			}
+			this.initQueue.forEach((callbackInfo) => {
+				callbackInfo.resolve();
+			});
+		} catch (err ) {
+			this.initQueue.forEach((callbackInfo) => {
+				callbackInfo.reject(err);
+			});
 		}
 	}
 

@@ -3,28 +3,28 @@
 const settings = require('./settings');
 
 const logger = {
-	debug: (summary, variable) => {
+	debug: (...params) => {
 		const { log } = settings;
 		if (log && typeof log.debug === 'function') {
-			log.debug(summary, variable);
+			log.debug(...params);
 		}
 	},
 
-	log: (summary, variable) => {
+	log: (...params) => {
 		const { log } = settings;
 		if (log && typeof log.log === 'function') {
-			log.log(summary, variable);
+			log.log(...params);
 		} else {
-			console.log('db logger', summary, variable);
+			console.log('db logger', ...params);
 		}
 	},
 
-	error: (summary, error) => {
+	error: (...params) => {
 		const { log } = settings;
 		if (log && typeof log.error === 'function') {
-			log.error(summary, error);
+			log.error(...params);
 		} else {
-			console.error('db error', summary, error);
+			console.error('db error', ...params);
 		}
 	},
 };
