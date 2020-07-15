@@ -2,10 +2,8 @@
 
 const mysql = require('mysql');
 // eslint-disable-next-line import/no-extraneous-dependencies
-const AWS = require('aws-sdk');
+const { getSecretsManager } = require('./aws_sdk');
 const logger = require('./logger');
-
-const secretsManager = new AWS.SecretsManager();
 
 class Database {
 	constructor(config, dbPool) {
@@ -37,6 +35,7 @@ class Database {
 
 	async requestInit() {
 		try {
+			const secretsManager = getSecretsManager();
 			const settings = {};
 			if (this.config.secretArn && typeof this.config.secretArn !== 'undefined') {
 				const ret = await secretsManager.getSecretValue({

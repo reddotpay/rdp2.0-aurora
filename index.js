@@ -23,6 +23,10 @@ const auroraConfig = {
 		return auroraConfig;
 	},
 
+	setAWS: (AWS) => {
+		settings.AWS = AWS;
+		return auroraConfig;
+	}
 };
 
 module.exports = {
