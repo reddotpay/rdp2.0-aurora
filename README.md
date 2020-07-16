@@ -40,6 +40,9 @@ BackendFunctionRole
 
 Examples
 ```js
+
+const AWSXRAY = require('aws-xray-sdk');
+const AWS = AWSXRAY.captureAWS(require('aws-sdk'));
 const { aurora, auroraConfig } = require('aurora');
 
 auroraConfig
@@ -59,7 +62,10 @@ auroraConfig
 		log: console.log,
 		error: console.error,
 		debug: console.log, // if provided, every SQL command will be logged
-	});
+	})
+	// you can provide an AWS object to use when getting secrets manager.
+	// if not provided, it will use the base aws-sdk package
+	.setAWS(AWS);
 
 // fetch tableOne row given a tableOneId, and get the last update
 // if tableOne is not found, return null.
