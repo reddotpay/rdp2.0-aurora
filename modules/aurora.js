@@ -1,17 +1,10 @@
 'use strict';
 
 const db = require('./db');
-const settings = require('./settings');
-
-const { dbSettings } = settings;
 
 const aurora = {
-	queryFromDB: async (dbName, sql, args) => {
-		return aurora.query(sql, args, dbName);
-	},
-	query: async (sql, args, dbName = settings.defaultDb) => {
-		const dbHandler = await db.getDb(dbName);
-		await dbHandler.useDb(dbName);
+	query: async (sql, args) => {
+		const dbHandler = await db.getDb();
 		return dbHandler.query(sql, args);
 	},
 	begin: async () => {
@@ -23,7 +16,7 @@ const aurora = {
 	rollback: async () => {
 		await db.rollback();
 	},
-	insert: async (tableName, insertObj, dbName = settings.defaultDb) => {
+	insert: async (tableName, insertObj) => {
 		const keys = Object.keys(insertObj);
 		const values = Object.values(insertObj);
 
@@ -41,13 +34,13 @@ const aurora = {
 			args.push(v);
 		});
 
-		return aurora.queryFromDB(dbName, sql, args);
+		return aurora.query(sql, args);
 	},
-	getLastInsertKey: async (dbName = settings.defaultDb) => {
-		const ret = await aurora.queryFromDB(dbName, 'select LAST_INSERT_ID();');
+	getLastInsertKey: async () => {
+		const ret = await aurora.query('select LAST_INSERT_ID();');
 		return (ret[0] || {})['LAST_INSERT_ID()'];
 	},
-	update: async (tableName, keys, update, dbName = settings.defaultDb) => {
+	update: async (tableName, keys, update) => {
 		const keysKList = Object.keys(keys);
 		const updateKList = Object.keys(update);
 
@@ -68,7 +61,7 @@ const aurora = {
 			args.push(value);
 		});
 
-		return aurora.queryFromDB(dbName, sql, args);
+		return aurora.query(sql, args);
 	},
 
 	/**
@@ -82,7 +75,7 @@ const aurora = {
 	 * @param {Array<number, number>} [additionalParams.limit] - Array for limit condition, Limit x | Limit x, y (Maximum 2 array values)
 	 *
 	 */
-	select: async (tableName, colToGet, colWhere, additionalParams, dbName = settings.defaultDb) => {
+	select: async (tableName, colToGet, colWhere, additionalParams) => {
 		const args = [];
 		let selectSql = '*';
 		if (colToGet) {
@@ -128,7 +121,7 @@ const aurora = {
 			}
 		}
 		const sql = `select ${selectSql} from ?? where ${whereSql} ${additionalSql}`;
-		return aurora.queryFromDB(dbName, sql, args);
+		return aurora.query(sql, args);
 	},
 	saveAll: async () => {
 		await db.saveAll();
