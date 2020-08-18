@@ -126,6 +126,9 @@ const aurora = {
 	saveAll: async () => {
 		await db.saveAll();
 	},
+	clearModels: () => {
+		await db.clearModels();
+	},
 	finishSession: async () => {
 		await db.finishSession();
 	},

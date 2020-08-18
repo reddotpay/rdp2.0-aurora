@@ -263,6 +263,13 @@ class Database {
 			await this.dbObjs[i].save();
 		}
 	}
+
+	clearModels() {
+		for (let i = 0; i < this.dbObjs.length; i += 1) {
+			// eslint-disable-next-line no-await-in-loop
+			delete this.dbObjs[i];
+		}
+	}
 }
 
 module.exports = Database;

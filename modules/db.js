@@ -77,6 +77,13 @@ class DatabasePool {
 		}
 	}
 
+	clearModels() {
+		const keys = Object.keys(this.dbList);
+		for (let i = 0; i < keys.length; i += 1) {
+			this.dbList[keys[i]].clearModels();
+		}
+	}
+
 	// you should finish the session before returning any call,
 	// to close the db connection.
 	// Even though the connection will persist to the next call, if this lambda

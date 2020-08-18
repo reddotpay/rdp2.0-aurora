@@ -51,6 +51,11 @@ class DBModelBase {
 	}
 
 	// overwrite this
+	static DefaultValues() {
+		return {};
+	}
+
+	// overwrite this
 	static GetAutoIncrementKey() {
 		return null;
 	}
@@ -306,6 +311,7 @@ class DBModelBase {
 		const updateVal = JSON.parse(JSON.stringify(values));
 		const primaryKeys = this.GetPrimaryKeys();
 		const specialColumnTypes = this.GetSpecialColumnType();
+		const defaultValues = this.DefaultValues();
 
 		const db = await this.GetDbHandler();
 		const obj = this.MakeInstance(db);
@@ -342,6 +348,10 @@ class DBModelBase {
 				if (!updateVal[colName]) { // if not already set
 					obj.set(colName, new Date());
 				}
+			}
+			const defaultValue = defaultValues[colName];
+			if (typeof defaultValue !== 'undefined' && typeof updateVal[colName] === 'undefined') {
+				obj.save(colName, defaultValue);
 			}
 		});
 		return obj;
