@@ -351,7 +351,7 @@ class DBModelBase {
 			}
 			const defaultValue = defaultValues[colName];
 			if (typeof defaultValue !== 'undefined' && typeof updateVal[colName] === 'undefined') {
-				obj.save(colName, defaultValue);
+				obj.set(colName, defaultValue);
 			}
 		});
 		return obj;
