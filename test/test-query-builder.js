@@ -132,6 +132,26 @@ describe('Testing Query Builder', () => {
 			expect(varList).to.eql(['test', 5, 10]);
 		});
 
+		it('condition is null', () => {
+			queryBuilder.conditionIsNull('test', []);
+			const { sql, varList } = queryBuilder.getParamSql();
+			expect(sql).to.be.a('string');
+			expect(varList).to.be.an('array').to.not.be.empty;
+			expect(sql).to.equal('select * from `test_db`.`test_table` WHERE ?? IS NULL');
+			expect(varList).to.eql(['test']);
+		});
+
+		it('condition is not null', () => {
+			queryBuilder
+				.not()
+				.conditionIsNull('test', []);
+			const { sql, varList } = queryBuilder.getParamSql();
+			expect(sql).to.be.a('string');
+			expect(varList).to.be.an('array').to.not.be.empty;
+			expect(sql).to.equal('select * from `test_db`.`test_table` WHERE NOT (?? IS NULL)');
+			expect(varList).to.eql(['test']);
+		});
+
 		it('condition like', () => {
 			queryBuilder.conditionLike('name', 'aaa%');
 			const { sql, varList } = queryBuilder.getParamSql();

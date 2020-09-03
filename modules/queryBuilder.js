@@ -171,6 +171,10 @@ QueryBuilder.prototype.conditionStrCmp = function (column, value, comparator = '
 	return this.customExpr(`STRCMP(??, ?) ${comparator} 0`, [column, value]);
 };
 
+QueryBuilder.prototype.conditionIsNull = function (column) {
+	return this.customExpr(`?? IS NULL`, [column]);
+};
+
 QueryBuilder.prototype.orderByAsc = function (column) {
 	return this.orderBy(column, true);
 };
