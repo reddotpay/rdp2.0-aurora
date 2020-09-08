@@ -102,7 +102,7 @@ const aurora = {
 					args.push(colWhere.like[key]);
 				});
 			}
-			whereSql = whereArray.join(' and ');
+			whereSql = whereArray.flat().join(' and ');
 		}
 		let additionalSql = '';
 		if (additionalParams) {
