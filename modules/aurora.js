@@ -129,9 +129,22 @@ const aurora = {
 	clearModels: () => {
 		db.clearModels();
 	},
+
+	/**
+	 * this will close all db connections
+	 */
 	finishSession: async () => {
 		await db.finishSession();
 	},
+
+	/**
+	 * Call this at the start of each serverless lambda session.
+	 * This will check through any existing connections.
+	 * If there are any connections that are no longer open, will open up a new connection.
+	 */
+	startSession: async () => {
+		await db.startSession();
+	}
 };
 
 module.exports = aurora;

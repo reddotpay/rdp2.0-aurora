@@ -83,10 +83,16 @@ class Database {
 			this.initQueue.forEach((callbackInfo) => {
 				callbackInfo.resolve();
 			});
+
+			this.initQueue = [];
+			this.initing = false;
 		} catch (err ) {
 			this.initQueue.forEach((callbackInfo) => {
 				callbackInfo.reject(err);
 			});
+
+			this.initQueue = [];
+			this.initing = false;
 		}
 	}
 
@@ -202,6 +208,39 @@ class Database {
 					return reject(err);
 				}
 				logger.log('commit');
+				return resolve();
+			});
+		});
+
+		return promise;
+	}
+
+	async checkConnection() {
+		logger.log('check connection');
+		if (!this.isActiveConnection) {
+			return;
+		}
+		try {
+			await this.ping();
+		} catch (err) {
+			logger.log('check connection failed. removing connection');
+			// close this connection
+			this.isActiveConnection = false;
+			delete this.connection;
+		}
+
+	}
+
+	async ping() {
+		const promise = new Promise((resolve, reject) => {
+			const connection = this.getConnection();
+			connection.ping((err) => {
+				if (err) {
+					// eslint-disable-next-line no-param-reassign
+					err.type = 'Ping Error';
+					return reject(err);
+				}
+				logger.log('ping success');
 				return resolve();
 			});
 		});

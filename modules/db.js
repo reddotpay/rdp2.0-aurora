@@ -96,6 +96,15 @@ class DatabasePool {
 			delete this.dbList[keys[i]];
 		}
 	}
+
+	// when handling a new serverless lambda call, use this function to check each db handler and stop inactive connections
+	async startSession() {
+		const keys = Object.keys(this.dbList);
+		for (let i = 0; i < keys.length; i += 1) {
+			this.dbList[keys[i]].clearModels();
+			await this.dbList[keys[i]].checkConnection();
+		}
+	}
 }
 
 const dbPool = new DatabasePool();
