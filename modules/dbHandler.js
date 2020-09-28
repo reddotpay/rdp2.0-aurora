@@ -154,34 +154,49 @@ class Database {
 		const promise = new Promise((resolve, reject) => {
 			logger.log(sql, args);
 			let isPaused = false;
+			let isAllLoaded = false;
 			let currHandlers = 0;
 			const connection = this.getConnection();
 			const query = connection.query(sql, args);
+			const checkFinish = () => {
+				if (currHandlers === 0 && isAllLoaded) {
+					resolve();
+				}
+			};
+
+			const onError = (err) => {
+				logger.log('Error - sql:', {
+					sql, varList: args,
+				});
+				// eslint-disable-next-line no-param-reassign
+				err.type = 'DB';
+				reject(err);
+			};
 			query
-				.on('error', (err) => {
-					logger.log('Error - sql:', {
-						sql, varList: args,
-					});
-					// eslint-disable-next-line no-param-reassign
-					err.type = 'DB';
-					return reject(err);
-				})
+				.on('error', onError)
 				.on('result', (row) => {
 					currHandlers += 1;
 					if (currHandlers >= bufferSize) {
 						connection.pause();
 						isPaused = true;
 					}
-					const onFinish = () => {
+					const onFinish = (err) => {
+						if (err instanceof Error) {
+							throw new Error(err);
+						}
 						currHandlers -= 1;
 						if (currHandlers < bufferSize && isPaused) {
 							isPaused = false;
 							connection.resume();
 						}
+						checkFinish();
 					};
-					funcForEachRow(row, onFinish);
+					funcForEachRow(row, onFinish, onError);
 				})
-				.on('end', resolve);
+				.on('end', () => {
+					isAllLoaded = true;
+					checkFinish();
+				});
 		});
 		return promise;
 	}
