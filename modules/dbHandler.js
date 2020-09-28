@@ -145,6 +145,47 @@ class Database {
 		return promise;
 	}
 
+	async queryStream(funcForEachRow, sql, args, bufferSize) {
+		const ret = await this.dbHandle(() => this.queryStreamPromise(funcForEachRow, sql, args, bufferSize));
+		return ret;
+	}
+
+	async queryStreamPromise(funcForEachRow, sql, args, bufferSize = 10) {
+		const promise = new Promise((resolve, reject) => {
+			logger.log(sql, args);
+			let isPaused = false;
+			let currHandlers = 0;
+			const connection = this.getConnection();
+			const query = connection.query(sql, args);
+			query
+				.on('error', (err) => {
+					logger.log('Error - sql:', {
+						sql, varList: args,
+					});
+					// eslint-disable-next-line no-param-reassign
+					err.type = 'DB';
+					return reject(err);
+				})
+				.on('result', (row) => {
+					currHandlers += 1;
+					if (currHandlers >= bufferSize) {
+						connection.pause();
+						isPaused = true;
+					}
+					const onFinish = () => {
+						currHandlers -= 1;
+						if (currHandlers < bufferSize && isPaused) {
+							isPaused = false;
+							connection.resume();
+						}
+					};
+					funcForEachRow(row, onFinish);
+				})
+				.on('end', resolve);
+		});
+		return promise;
+	}
+
 	async begin() {
 		await this.dbHandle(() => this.beginPromise());
 	}

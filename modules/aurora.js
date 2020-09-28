@@ -7,6 +7,10 @@ const aurora = {
 		const dbHandler = await db.getDb();
 		return dbHandler.query(sql, args);
 	},
+	queryStream: async (funcForEachRow, sql, args, bufferSize = 10) => {
+		const dbHandler = await db.getDb();
+		return dbHandler.queryStream(funcForEachRow, sql, args, bufferSize);
+	},
 	begin: async () => {
 		await db.begin();
 	},
