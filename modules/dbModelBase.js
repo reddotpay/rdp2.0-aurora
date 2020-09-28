@@ -161,7 +161,7 @@ class DBModelBase {
 	async save() {
 		if (this.constructor.IsReadOnly()) {
 			const tableName = this.GetTableName();
-			logger.debug(`Attempting to save to readonly table: ${tableName}`);
+			logger.log(`Attempting to save to readonly table: ${tableName}`);
 			return;
 		}
 

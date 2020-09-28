@@ -127,7 +127,7 @@ class Database {
 
 	queryPromise(sql, args) {
 		const promise = new Promise((resolve, reject) => {
-			logger.debug(sql, args);
+			logger.log(sql, args);
 			const connection = this.getConnection();
 			connection.query(sql, args, (err, rows) => {
 				if (err) {
