@@ -5,6 +5,26 @@ const mysql = require('mysql');
 const { getSecretsManager } = require('./aws_sdk');
 const logger = require('./logger');
 
+
+function getQueryStreamRunPerRowFunc (funcForEachRow) {
+	return (row, onFinish, onError) => queryStreamRunPerRow(funcForEachRow, row, onFinish, onError);
+}
+function queryStreamRunPerRow (funcForEachRow, row, onFinish, onError) {
+	queryStreamRunPerRowAsync(funcForEachRow, row, onFinish, onError);
+}
+
+async function queryStreamRunPerRowAsync (funcForEachRow, row, onFinish, onError) {
+	try {
+		const ret = funcForEachRow(row, () => {});
+		if (ret instanceof Promise) {
+			await ret;
+		}
+		onFinish();
+	} catch (err) {
+		onError(err);
+	}
+}
+
 class Database {
 	constructor(config, dbPool) {
 		this.dbPool = dbPool;
@@ -146,6 +166,7 @@ class Database {
 	}
 
 	async queryStream(funcForEachRow, sql, args, bufferSize) {
+		// const func = getQueryStreamRunPerRowFunc(funcForEachRow);
 		const ret = await this.dbHandle(() => this.queryStreamPromise(funcForEachRow, sql, args, bufferSize));
 		return ret;
 	}
@@ -160,24 +181,22 @@ class Database {
 			const query = connection.query(sql, args);
 
 			let err = null;
-			const checkFinish = () => {
+			function checkFinish () {
 				if (err) {
 					reject(err);
 				} else if (currHandlers <= 0 && isAllLoaded) {
 					resolve();
 				}
-			};
-
-			const onFinish = () => {
+			}
+			function onFinish () {
 				currHandlers -= 1;
 				if (currHandlers < bufferSize && isPaused) {
 					isPaused = false;
 					connection.resume();
 				}
 				checkFinish();
-			};
-
-			const onError = (e) => {
+			}
+			function onError (e) {
 				logger.log('Error - sql:', {
 					sql, varList: args,
 				});
@@ -185,7 +204,8 @@ class Database {
 				e.type = 'DB';
 				err = e;
 				onFinish();
-			};
+			}
+
 			query
 				.on('error', onError)
 				.on('result', (row) => {
@@ -197,18 +217,9 @@ class Database {
 						connection.pause();
 						isPaused = true;
 					}
-					const run = async () => {
-						try {
-							const ret = funcForEachRow(row);
-							if (ret instanceof Promise) {
-								await ret;
-							}
-							onFinish();
-						} catch (err) {
-							onError(err);
-						}
-					};
-					run();
+					// queryStreamRunPerRow(funcForEachRow, row, onFinish, onError);
+					funcForEachRow(row, onFinish, onError);
+					// run(row);
 				})
 				.on('end', () => {
 					isAllLoaded = true;
