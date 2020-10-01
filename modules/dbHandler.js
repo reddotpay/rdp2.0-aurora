@@ -388,10 +388,13 @@ class Database {
 	}
 
 	clearModels() {
-		for (let i = 0; i < this.dbObjs.length; i += 1) {
-			// eslint-disable-next-line no-await-in-loop
-			delete this.dbObjs[i];
+		while(this.dbObjs.length > 0) {
+			this.dbObjs.pop();
 		}
+		// for (let i = 0; i < this.dbObjs.length; i += 1) {
+		// 	// eslint-disable-next-line no-await-in-loop
+		// 	delete this.dbObjs[i];
+		// }
 	}
 }
 

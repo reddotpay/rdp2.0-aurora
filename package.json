@@ -1,6 +1,6 @@
 {
 	"name": "@reddotpay/rdp2.0-aurora",
-	"version": "1.0.27",
+	"version": "1.0.29",
 	"description": "Aurora connector for RDP2.0 products",
 	"main": "index.js",
 	"scripts": {
