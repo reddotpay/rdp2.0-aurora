@@ -361,7 +361,7 @@ const ret = await queryBuilder
 	.select('id')
 	.select('cost')
 
-	.startOinstarBlock()
+	.startOrBlock()
 		.condition('id', 5, '<')
 		.condition('id', 10, '>')
 	.endBlock()
