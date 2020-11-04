@@ -132,7 +132,7 @@ const testQueryBuilder = await QueryBuilder.CreateBuilder('test');
 // to only select specific columns.
 testQueryBuilder.select('id');
 testQueryBuilder.select('column_a');
-testQueryBuilder.select('?, ?', ['desc', 'asc']);  // if you need to safe case the column name to a safe string
+testQueryBuilder.select('?, ?', ['desc', 'asc']);  // if you need to safe cast the column name to a safe string
 
 // select id, column_a, desc, asc from test
 const ret = await testQueryBuilder.exect();
@@ -361,7 +361,7 @@ const ret = await queryBuilder
 	.select('id')
 	.select('cost')
 
-	.startOrBlock()
+	.startOinstarBlock()
 		.condition('id', 5, '<')
 		.condition('id', 10, '>')
 	.endBlock()
@@ -371,4 +371,335 @@ const ret = await queryBuilder
 	.orderByDesc('status')
 	.orderByAsc('id')
 	.exec();
+```
+
+### DBModel System
+
+DBModel system is a simple ORM for MySQL.
+Each DBModel class, should correspond to 1 DB table.
+
+#### Declaring Class
+
+For example, if you have a class `test`, you first have to create a file `test.js`, and declare it to extend `DBModelBase`
+
+Example test.js contents:
+```js
+// test.js
+const { DBModelBase } = require('@reddotpay/rdp2.0-aurora');
+
+class Test extends DBModelBase {
+
+	// (OPTIONAL) declare the database name here.
+	// if this is not provided, will default to the value that is set using setDefaultDb
+	// when setting aurora config.
+	static GetDBName() {
+		return 'test_db';
+	}
+
+	// declare the table name here
+	static GetTableName() {
+		return 'test';
+	}
+
+	// declare the primary key columns in the table here.
+	static GetPrimaryKeys() {
+		return ['pk_col_1', 'pk_col_2', 'pk_col_3'];
+	}
+
+}
+```
+
+#### Creating new instances
+
+There are 2 main ways to create a new instance.
+1. from DB fetch
+2. when creating new instance. (e.g when you want to prepare to insert into DB)
+
+##### Creating instances from DB query fetch.
+
+To create instances from DB query fetch, use query builder.
+```js
+const Test = require('./test');
+
+// select * from test where pk_col_1 = 1 and pk_col2 = 2;
+const builder = await Test.GetBuilder();
+builder
+	.condition('pk_col_1', 1)
+	.condition('pk_col_2', 2);
+
+const testList = await Test.QueryFetch(builder);
+
+testList.forEach((test) => {
+	console.log(test instanceOf Test); // true
+});
+
+```
+
+You can also request to lock the rows for the next query if you are in a transaction
+```js
+
+const Test = require('./test');
+
+// select * from test where pk_col_1 = 1 and pk_col2 = 2 FOR UPDATE;
+const builder = await Test.GetBuilder();
+builder
+	.condition('pk_col_1', 1)
+	.condition('pk_col_2', 2);
+
+Test.LockNext();
+const testList = await Test.QueryFetch(builder);
+
+```
+
+##### Creating new instances
+
+Use NewFromObject function to create a new instance, and pass in an object with the column values.
+Note that if the declared primary keys' values are not provided, an error will be thrown.
+```js
+const Test = require('./test');
+
+const test = await Test.NewFromObject({
+	pk_col_1: 1,
+	pk_col_2: 2,
+	pk_col_3: 3,
+	col_4: 'column_4_value',
+	col_5: 'column_5_value',
+});
+```
+
+#### Setting a column value
+
+NOTE: DO NOT OVERWRITE A PRIMARY KEY VALUE
+```js
+test.set('column_name', 'new_column_value');
+```
+
+#### Setting multiple column values by passing in an object
+
+NOTE: DO NOT OVERWRITE PRIMARY KEY VALUES
+```js
+test.setFromObject({
+	column_1: 'new_value1',
+	column_2: 'new_value2'
+});
+```
+
+#### Getting a column value from an instance
+
+```js
+const value = test.get('column_name');
+```
+
+You can also get the original value when it is fetched from DB.
+
+Assume there is a row on DB with the following values:
+pk_col_1: 1
+pk_col_2: 2
+pk_col_3: 3
+column_name: 'original_value'
+```js
+
+const Test = require('./test');
+
+const builder = await Test.GetBuilder();
+builder
+	.condition('pk_col_1', 1)
+	.condition('pk_col_2', 2)
+	.condition('pk_col_3', 3);
+
+const testList = await Test.QueryFetch(builder);
+const test = testList[0];
+
+const value = test.get('column_name'); // original_value
+test.set('column_name', 'new_value');
+const newValue = test.get('column_name'); // new_value
+const originalValue = test.get('column_name', true); // original_value
+```
+
+#### Saving the changes.
+
+After you made the changes, you can request to save the changes into DB
+```js
+await test.save();
+```
+
+If the object is created using `NewFromObject`, the row will be inserted to the DB.
+If the object is created using `QueryFetch`, the row in the the DB will be updated.
+
+#### Deleting the object in DB
+
+```js
+test.delete();
+await test.save();
+```
+
+There is also a `saveAll` function in aurora, which allows saving of all aurora objects.
+
+```js
+const { aurora } = require('@reddotpay/rdp2.0-aurora');
+const Test = require('./test');
+
+const test1 = // create test 1 instance
+const test2 = // create test 2 instance
+const test3 = // create test 3 instance
+
+await aurora.saveAll();
+```
+The above is equivalent to
+```js
+await test1.save();
+await test2.save();
+await test3.save();
+```
+
+#### Declaring special column types
+
+You can declare special column types in your class, that will have special handling.
+
+```js
+class Test extends DBModelBase {
+
+	... // other sfuff
+
+	// declare this optional function
+	static GetSpecialColumnType() {
+		return {
+			// column name : type
+			primary_key_column: 'uuid'
+			column_1: 'created-date',
+			column_2: 'update-date',
+			column_3: 'bool',
+			column_4: 'json'
+		};
+	}
+}
+```
+
+Types are as below
+1. uuid
+	- Only for primary key columns
+	- When creating a new object, a uuid v4 will be automatically generated and set into this column.
+2. created-date
+	- When creating a new object, the current timestamp will be automatically assigned and set into this column.
+3. update-date
+	- When creating a new object, the current timestamp will be automatically assigned and set into this column.
+	- When saving into DB, this column's value will automatically be assigned to the current timestamp
+4. bool
+	- On MySQL, boolean types are stored as TINYINT. (1 or 0 values)
+	- When getting the column's value using the `get` method, will automatically cast the value into a true/false boolean value.
+	- When setting the column's value using the `set` method, allows passing in a 'true/false' boolean value.
+5. json
+	- When getting the column's value using the `get` method, will automatically parse the string value and convert into a js object.
+	- When setting the column's value using the `set` method, allows passing in a js object, will automatically do a stringify before saving.
+
+```js
+// example
+
+class Test extends DBModelBase {
+	... // other sfuff
+	// declare this optional function
+	static GetSpecialColumnType() {
+		return {
+			// column name : type
+			primary_key_column: 'uuid'
+			column_1: 'created-date',
+			column_2: 'update-date',
+			column_3: 'bool',
+			column_4: 'json'
+		};
+	}
+}
+
+// assume test object has the following values:
+// column_3: true
+// column_3_not_declared: true
+// column_4: "{\"key1\":\"value\"}"
+// column_4_not_declared: "{\"key1\":\"value\"}"
+
+// a = true
+const a = test.get('column_3');
+
+// b = 1
+const b = test.get('column_3_not_declared');
+
+// c = { key: 'value' }
+// typeof c = 'object'
+const c = test.get('column_4');
+
+// d = "{\"key1\":\"value\"}"
+// typeof d = 'string'
+const d = test.get('column_4_not_declared');
+
+
+const test2 = await Test.newFromObject({});
+test2.get('primary_key_column'); // will be an automatically generated uuid
+test2.get('created_date'); // will be the current date time
+test2.get('update_date'); // will be the current date time
+
+```
+
+#### Declaring default values
+
+You can also declare default values which will be set automatically when creating new object.
+
+```js
+class Test extends DBModelBase {
+	...// other declarations here
+
+	// declare this optional function
+	static DefaultValues() {
+		return {
+			// column name : default value
+			column_1: {},
+			column_2: 'value',
+			column_3: 12345,
+		};
+	}
+
+
+	static GetSpecialColumnType() {
+		return {
+			// column name : type
+			column_1: 'json',
+		};
+	}
+}
+
+
+const test = await Test.newFromObject({ primary_key_column: 1 });
+test.get('column_1'); // {}
+test.get('column_2'); // "value"
+test.get('column_3'); // 12345
+```
+
+#### Declaring read only classes
+
+You can declare read-only classes. All object instances will not be saved into DB.
+
+```js
+class Test extends DBModelBase {
+	// rest of the declarations
+
+	// declare this function
+	static IsReadOnly() {
+		return true;
+	}
+}
+```
+
+#### Declaring dummy objects
+
+You can declare dummy objects. These will not be saved into DB.
+```js
+const { aurora } = require('@reddotpay/rdp2.0-aurora');
+const Test = require('./test');
+
+const test1 = // create test 1 instance
+const test2 = // create test 2 instance
+const test3 = // create test 3 instance
+
+test1.setIsDummy();
+await test1.save(); // NOTHING HAPPENS
+
+await aurora.saveAll(); // ONLY test2 and test3 are saved
 ```

@@ -60,6 +60,7 @@ class DBModelBase {
 		return null;
 	}
 
+	// overwrite this
 	static GetDBName() {
 		return settings.defaultDb;
 	}
@@ -159,9 +160,7 @@ class DBModelBase {
 	}
 
 	async save() {
-		if (this.constructor.IsReadOnly()) {
-			const tableName = this.GetTableName();
-			logger.log(`Attempting to save to readonly table: ${tableName}`);
+		if (this.constructor.IsReadOnly() || this.doNotSave) {
 			return;
 		}
 
