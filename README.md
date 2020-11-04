@@ -1,3 +1,37 @@
+- [RDP2.0-Aurora](#rdp20-aurora)
+    + [Install](#install)
+    + [Requirements](#requirements)
+        * [Policy](#policy)
+    + [Usage](#usage)
+      - [Primary Function](#primary-function)
+  * [Query Builder](#query-builder)
+    + [Conditions](#conditions)
+    + [Negation](#negation)
+    + [Block Expressions](#block-expressions)
+      - [Complex Block Expressions](#complex-block-expressions)
+      - [Locking query results. (for handling in transaction)](#locking-query-results--for-handling-in-transaction-)
+      - [Limit Results](#limit-results)
+      - [Pagination](#pagination)
+      - [ORDER BY](#order-by)
+      - [Executing the Query](#executing-the-query)
+      - [Chaining Queries](#chaining-queries)
+    + [DBModel System](#dbmodel-system)
+      - [Declaring Class](#declaring-class)
+      - [Creating new instances](#creating-new-instances)
+        * [Creating instances from DB query fetch.](#creating-instances-from-db-query-fetch)
+        * [Creating new instances](#creating-new-instances-1)
+      - [Setting a column value](#setting-a-column-value)
+      - [Setting multiple column values by passing in an object](#setting-multiple-column-values-by-passing-in-an-object)
+      - [Getting a column value from an instance](#getting-a-column-value-from-an-instance)
+      - [Saving the changes.](#saving-the-changes)
+      - [Deleting the object in DB](#deleting-the-object-in-db)
+      - [Declaring special column types](#declaring-special-column-types)
+      - [Declaring default values](#declaring-default-values)
+      - [Declaring read only classes](#declaring-read-only-classes)
+      - [Declaring dummy objects](#declaring-dummy-objects)
+
+<small><i><a href='http://ecotrust-canada.github.io/markdown-toc/'>Table of contents generated with markdown-toc</a></i></small>
+
 # RDP2.0-Aurora
 <!-- [![npm (scoped)](https://img.shields.io/npm/v/@reddotpay/rdp2.0-aurora.svg)](https://www.npmjs.com/package/@reddotpay/rdp2.0-aurora) -->
 
