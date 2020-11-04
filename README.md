@@ -15,20 +15,20 @@
       - [ORDER BY](#order-by)
       - [Executing the Query](#executing-the-query)
       - [Chaining Queries](#chaining-queries)
-    + [DBModel System](#dbmodel-system)
-      - [Declaring Class](#declaring-class)
-      - [Creating new instances](#creating-new-instances)
-        * [Creating instances from DB query fetch.](#creating-instances-from-db-query-fetch)
-        * [Creating new instances](#creating-new-instances-1)
-      - [Setting a column value](#setting-a-column-value)
-      - [Setting multiple column values by passing in an object](#setting-multiple-column-values-by-passing-in-an-object)
-      - [Getting a column value from an instance](#getting-a-column-value-from-an-instance)
-      - [Saving the changes.](#saving-the-changes)
-      - [Deleting the object in DB](#deleting-the-object-in-db)
-      - [Declaring special column types](#declaring-special-column-types)
-      - [Declaring default values](#declaring-default-values)
-      - [Declaring read only classes](#declaring-read-only-classes)
-      - [Declaring dummy objects](#declaring-dummy-objects)
+  * [DBModel System](#dbmodel-system)
+    + [Declaring Class](#declaring-class)
+    + [Creating new instances](#creating-new-instances)
+      - [Creating instances from DB query fetch.](#creating-instances-from-db-query-fetch)
+      - [Creating new instances](#creating-new-instances-1)
+    + [Setting a column value](#setting-a-column-value)
+    + [Setting multiple column values by passing in an object](#setting-multiple-column-values-by-passing-in-an-object)
+    + [Getting a column value from an instance](#getting-a-column-value-from-an-instance)
+    + [Saving the changes.](#saving-the-changes)
+    + [Deleting the object in DB](#deleting-the-object-in-db)
+    + [Declaring special column types](#declaring-special-column-types)
+    + [Declaring default values](#declaring-default-values)
+    + [Declaring read only classes](#declaring-read-only-classes)
+    + [Declaring dummy objects](#declaring-dummy-objects)
 
 <small><i><a href='http://ecotrust-canada.github.io/markdown-toc/'>Table of contents generated with markdown-toc</a></i></small>
 
@@ -407,12 +407,12 @@ const ret = await queryBuilder
 	.exec();
 ```
 
-### DBModel System
+## DBModel System
 
 DBModel system is a simple ORM for MySQL.
 Each DBModel class, should correspond to 1 DB table.
 
-#### Declaring Class
+### Declaring Class
 
 For example, if you have a class `test`, you first have to create a file `test.js`, and declare it to extend `DBModelBase`
 
@@ -443,13 +443,13 @@ class Test extends DBModelBase {
 }
 ```
 
-#### Creating new instances
+### Creating new instances
 
 There are 2 main ways to create a new instance.
 1. from DB fetch
 2. when creating new instance. (e.g when you want to prepare to insert into DB)
 
-##### Creating instances from DB query fetch.
+#### Creating instances from DB query fetch.
 
 To create instances from DB query fetch, use query builder.
 ```js
@@ -485,7 +485,7 @@ const testList = await Test.QueryFetch(builder);
 
 ```
 
-##### Creating new instances
+#### Creating new instances
 
 Use NewFromObject function to create a new instance, and pass in an object with the column values.
 Note that if the declared primary keys' values are not provided, an error will be thrown.
@@ -501,14 +501,14 @@ const test = await Test.NewFromObject({
 });
 ```
 
-#### Setting a column value
+### Setting a column value
 
 NOTE: DO NOT OVERWRITE A PRIMARY KEY VALUE
 ```js
 test.set('column_name', 'new_column_value');
 ```
 
-#### Setting multiple column values by passing in an object
+### Setting multiple column values by passing in an object
 
 NOTE: DO NOT OVERWRITE PRIMARY KEY VALUES
 ```js
@@ -518,7 +518,7 @@ test.setFromObject({
 });
 ```
 
-#### Getting a column value from an instance
+### Getting a column value from an instance
 
 ```js
 const value = test.get('column_name');
@@ -550,7 +550,7 @@ const newValue = test.get('column_name'); // new_value
 const originalValue = test.get('column_name', true); // original_value
 ```
 
-#### Saving the changes.
+### Saving the changes.
 
 After you made the changes, you can request to save the changes into DB
 ```js
@@ -560,7 +560,7 @@ await test.save();
 If the object is created using `NewFromObject`, the row will be inserted to the DB.
 If the object is created using `QueryFetch`, the row in the the DB will be updated.
 
-#### Deleting the object in DB
+### Deleting the object in DB
 
 ```js
 test.delete();
@@ -586,7 +586,7 @@ await test2.save();
 await test3.save();
 ```
 
-#### Declaring special column types
+### Declaring special column types
 
 You can declare special column types in your class, that will have special handling.
 
@@ -672,7 +672,7 @@ test2.get('update_date'); // will be the current date time
 
 ```
 
-#### Declaring default values
+### Declaring default values
 
 You can also declare default values which will be set automatically when creating new object.
 
@@ -706,7 +706,7 @@ test.get('column_2'); // "value"
 test.get('column_3'); // 12345
 ```
 
-#### Declaring read only classes
+### Declaring read only classes
 
 You can declare read-only classes. All object instances will not be saved into DB.
 
@@ -721,7 +721,7 @@ class Test extends DBModelBase {
 }
 ```
 
-#### Declaring dummy objects
+### Declaring dummy objects
 
 You can declare dummy objects. These will not be saved into DB.
 ```js
