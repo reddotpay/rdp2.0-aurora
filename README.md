@@ -645,8 +645,8 @@ class Test extends DBModelBase {
 }
 
 // assume test object has the following values:
-// column_3: true
-// column_3_not_declared: true
+// column_3: 1
+// column_3_not_declared: 1
 // column_4: "{\"key1\":\"value\"}"
 // column_4_not_declared: "{\"key1\":\"value\"}"
 
@@ -670,6 +670,46 @@ test2.get('primary_key_column'); // will be an automatically generated uuid
 test2.get('created_date'); // will be the current date time
 test2.get('update_date'); // will be the current date time
 
+```
+
+### Getting all the column and values in an object
+
+```js
+const values = test.getDisplayValues();
+
+class Test extends DBModelBase {
+	... // other sfuff
+	// declare this optional function
+	static GetSpecialColumnType() {
+		return {
+			column_2: 'bool',
+			column_3: 'json'
+		};
+	}
+}
+
+```
+
+Example
+```js
+
+
+// assume test object has the following values:
+// primary_key: "key_value"
+// column_1: 1
+// column_2: 0
+// column_4: "{\"key1\":\"value\"}"
+
+const values = test.getDisplayValues();
+
+// values = {
+//	primary_key: 'key_value',
+//	column_1: 1,
+//	column_2: false,
+//	column_3: {
+//		key1: 'value'
+//	},
+// }
 ```
 
 ### Declaring default values
