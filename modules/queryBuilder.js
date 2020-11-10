@@ -14,14 +14,14 @@ const toInt = (val) => {
 };
 const toArray = (a) => (Array.isArray(a) ? a : [a]);
 
-const newExpBlock = (type, wrapFunction = null) => ({
+const newExpBlock = (type, wrapFunction) => ({
 	type,
 	wrapFunction,
 	expList: [],
 	varList: [],
 });
-const newAndBlock = (wrapFunction = null) => newExpBlock(' and ', wrapFunction);
-const newOrBlock = (wrapFunction = null) => newExpBlock(' or ', wrapFunction);
+const newAndBlock = (wrapFunction) => newExpBlock(' and ', wrapFunction);
+const newOrBlock = (wrapFunction) => newExpBlock(' or ', wrapFunction);
 
 const QueryBuilder = function (dbHandler, dbName, tableName) {
 	this.dbHandler = dbHandler;
@@ -34,12 +34,14 @@ const QueryBuilder = function (dbHandler, dbName, tableName) {
 	this.selectFields = [];
 	this.selectArgs = [];
 
-	this.currQuery = newAndBlock();
+	this.currQuery = newAndBlock(null);
 	this.rootQuery = this.currQuery;
 	this.wrapFunction = null;
 	this.startIdx = 0;
 	this.limitQuery = 0;
 	this.isLock = false;
+	this.isUseOffsetOptimization = false;
+	this.primaryKeys = [];
 
 	this.order = [];
 	this.orderVarList = [];
@@ -48,6 +50,13 @@ const QueryBuilder = function (dbHandler, dbName, tableName) {
 // block operations
 // e.g ( a = 1 AND ( b = 2 or c = 3 ) )
 
+// offsetOptimization is useful if you need to offset a large number of rows
+QueryBuilder.prototype.useOffsetOptimization = function (primaryKeys) {
+	this.isUseOffsetOptimization = true;
+	this.primaryKeys = toArray(primaryKeys);
+	return this;
+};
+
 QueryBuilder.prototype.lock = function () {
 	this.isLock = true;
 	return this;
@@ -55,13 +64,13 @@ QueryBuilder.prototype.lock = function () {
 
 QueryBuilder.prototype.startAndBlock = function () {
 	this.addBlock(newAndBlock(this.wrapFunction));
-	this.wrapFunction = false;
+	this.wrapFunction = null;
 	return this;
 };
 
 QueryBuilder.prototype.startOrBlock = function () {
 	this.addBlock(newOrBlock(this.wrapFunction));
-	this.wrapFunction = false;
+	this.wrapFunction = null;
 	return this;
 };
 
@@ -199,6 +208,11 @@ QueryBuilder.prototype.select = function (field, args = []) {
 	return this;
 };
 
+QueryBuilder.prototype.selectColumn = function (column) {
+	const tableName = this.tableName;
+	return this.select(`\`${tableName}\`.??`, column);
+};
+
 const getQueryExpression = function (expBlock) {
 	if (typeof expBlock === 'string') {
 		return expBlock;
@@ -219,17 +233,36 @@ const getQueryExpression = function (expBlock) {
 };
 
 QueryBuilder.prototype.getParamSql = function () {
+
+	if (this.isUseOffsetOptimization) {
+		if (!this.primaryKeys || !this.primaryKeys.length) {
+			const err = new Error ('Cannot use count optimization without specifying primary keys');
+			logger.error('query manager err', err);
+			throw err;
+		}
+	}
+
+	const tableName = `\`${this.tableName}\``;
+	const fullTableName = `\`${this.dbName}\`.\`${this.tableName}\``;
+
 	const varList = [];
 	const selectStr = this.selectFields && this.selectFields.length > 0 ? this.selectFields.join(',') : '*';
 	this.selectArgs.forEach((val) => {
 		varList.push(val);
 	});
 
+	if (this.isUseOffsetOptimization) {
+		this.primaryKeys.forEach((key) => {
+			varList.push(key);
+		});
+	}
+
 	const exp = getQueryExpression(this.rootQuery);
 	const conditionStr = exp ? ` WHERE ${exp}` : '';
 	this.varList.forEach((val) => {
 		varList.push(val);
 	});
+
 
 	let orderStr = '';
 	if (this.orderVarList.length) {
@@ -250,13 +283,41 @@ QueryBuilder.prototype.getParamSql = function () {
 		varList.push(this.limitQuery);
 	}
 
-	const forUpdate = this.isLock ? ' FOR UPDATE' : '';
+	let orderStrWithOffset = '';
+	if (this.isUseOffsetOptimization) {
+		this.primaryKeys.forEach((key) => {
+			varList.push(key);
+			varList.push(key);
+		});
 
-	const sql = `select ${selectStr} from \`${this.dbName}\`.\`${this.tableName}\`${conditionStr}${orderStr}${limitStr}${forUpdate}`;
-	return {
-		sql,
-		varList,
-	};
+		if (this.orderVarList.length) {
+			orderStrWithOffset = ` ORDER BY ${this.order.map((o) => `${tableName}.${o}`).join(', ')}`;
+			this.orderVarList.forEach((k) => {
+				varList.push(k);
+			});
+		}
+	}
+
+	const forUpdate = this.isLock ? ' FOR UPDATE' : '';
+	const fullConditionStr = `${conditionStr}${orderStr}${limitStr}`;
+	if (!this.isUseOffsetOptimization) {
+		const sql = `select ${selectStr} from ${fullTableName} ${tableName}${fullConditionStr}${forUpdate}`;
+		return {
+			sql,
+			varList,
+		};
+	} else {
+		const primaryKeyStr = this.primaryKeys.map((key) => '??').join(', ');
+		const onStmts = this.primaryKeys.map((key) => `${tableName}.?? = t2.??`).join(' AND ');
+
+		let sql = `select ${selectStr} from ${fullTableName} ${tableName} INNER JOIN (`
+		sql += `select ${primaryKeyStr} from ${fullTableName}${fullConditionStr}`;
+		sql += `) t2 ON ${onStmts}${orderStrWithOffset}${forUpdate}`;
+		return {
+			sql,
+			varList,
+		};
+	}
 };
 
 QueryBuilder.prototype.exec = async function () {
@@ -264,7 +325,7 @@ QueryBuilder.prototype.exec = async function () {
 		const { sql, varList } = this.getParamSql();
 		return this.dbHandler.query(sql, varList);
 	} catch (err) {
-		logger.log('query manager err', err);
+		logger.error('query manager err', err);
 		throw err;
 	}
 };
