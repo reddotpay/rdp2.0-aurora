@@ -164,9 +164,7 @@ const { QueryBuilder } = require('aurora');
 const testQueryBuilder = await QueryBuilder.CreateBuilder('test');
 
 // to only select specific columns.
-testQueryBuilder.select('id');
-testQueryBuilder.select('column_a');
-testQueryBuilder.select('?, ?', ['desc', 'asc']);  // if you need to safe cast the column name to a safe string
+testQueryBuilder.selectColumn('id');
 
 // select id, column_a, desc, asc from test
 const ret = await testQueryBuilder.exect();
@@ -333,13 +331,32 @@ queryBuilder.limit(100);
 ```js
 // SELECT * FROM test LIMIT 0, 100
 const pageSize = 100;
-const pageNum = 1; // starts from 1
-queryBuilder.page(100, 1);
+const pageNum = 1; // get pagea 1
+queryBuilder.page(pageSize, pageNum);
 
 // SELECT * FROM test LIMIT 100, 100
 const pageSize = 100;
-const pageNum = 2; // get page 2
-queryBuilder.page(100, 2);
+const pageNum = 2; // get page 2 (the 101st entry onwards)
+queryBuilder.page(pageSize, pageNum);
+```
+
+##### Pagination Optimization
+
+When the page number is very huge, executing the query results in a very huge query time.
+When this happens, use the `useOffsetOptimization` function.
+For this to work, you will need to pass in the primary key for the table due to the nature of the optimization.
+```js
+
+// Generated statement:
+// SELECT * FROM test
+// INNER JOIN ( SELECT pk_col from test ORDER BY date_created DESC LIMIT 300000, 100 ) t2
+// ON test.pk_col = t2.pk_col
+// ORDER BY date_created DESC
+const pageSize = 100;
+const pageNum = 3000; // get page 3000 (the 300,001 st entry onwards)
+queryBuilder.page(pageSize, pageNum);
+queryBuilder.orderByDesc('date_created');
+queryBuilder.useOffsetOptimization(['pk_col']);
 ```
 
 #### ORDER BY
