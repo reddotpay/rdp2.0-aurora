@@ -147,7 +147,7 @@ class Database {
 
 	queryPromise(sql, args) {
 		const promise = new Promise((resolve, reject) => {
-			logger.log(sql, args);
+			logger.debug(sql, args);
 			const connection = this.getConnection();
 			connection.query(sql, args, (err, rows) => {
 				if (err) {
@@ -173,7 +173,7 @@ class Database {
 
 	async queryStreamPromise(funcForEachRow, sql, args, bufferSize = 10) {
 		const promise = new Promise((resolve, reject) => {
-			logger.log(sql, args);
+			logger.debug(sql, args);
 			let isPaused = false;
 			let isAllLoaded = false;
 			let currHandlers = 0;
